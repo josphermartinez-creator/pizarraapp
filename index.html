@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E1C18">
+<title>La Pizarra — Valor y párleys con datos reales</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="La Pizarra">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#0E1C18;
+    --board-2:#13261F;
+    --board-line:#22382F;
+    --paper:#F1EBDC;
+    --paper-2:#E9E1CE;
+    --paper-line:#D3C8AF;
+    --ink:#15211C;
+    --ink-soft:#5E6760;
+    --brass:#C9A24B;
+    --brass-dim:#9C7E3a;
+    --win:#1FA971;
+    --win-bg:#DDF3E7;
+    --win-ink:#0F6E48;
+    --warn:#D4583B;
+    --board-text:#EAE3D2;
+    --board-muted:#8B978D;
+    --radius:14px;
+    --shadow:0 10px 30px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--board);
+    color:var(--board-text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px 220px}
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,#0E1C18 70%, rgba(14,28,24,.0));
+    padding-top:calc(env(safe-area-inset-top) + 14px);
+    padding-bottom:8px;
+  }
+  .mast-inner{max-width:560px;margin:0 auto;padding:0 16px}
+  .brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .brand{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;letter-spacing:.14em;font-size:20px;
+    color:var(--paper);text-transform:uppercase;line-height:1;
+  }
+  .brand b{color:var(--brass)}
+  .quota{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    color:var(--board-muted);text-align:right;line-height:1.3;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .quota b{color:var(--brass);font-weight:700}
+  .tagline{
+    font-size:11px;color:var(--board-muted);margin-top:3px;letter-spacing:.02em;
+  }
+
+  /* sport selector bar */
+  .sportbar{display:none;gap:8px;margin-top:12px;align-items:center}
+  .sportbar.show{display:flex}
+  .sel-wrap{position:relative;flex:1;min-width:0}
+  select#sport{
+    -webkit-appearance:none;appearance:none;width:100%;
+    background:var(--board-2);color:var(--board-text);
+    border:1px solid var(--board-line);border-radius:10px;
+    padding:11px 36px 11px 13px;font-family:'Inter',sans-serif;
+    font-size:14px;font-weight:500;cursor:pointer;
+  }
+  .sel-wrap::after{
+    content:"▾";position:absolute;right:13px;top:50%;transform:translateY(-50%);
+    color:var(--brass);pointer-events:none;font-size:12px;
+  }
+  .btn{
+    border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;
+    border-radius:10px;transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn-load{
+    background:var(--brass);color:#1c1407;padding:11px 16px;font-size:14px;
+    white-space:nowrap;flex:0 0 auto;
+  }
+  .btn-load:hover{filter:brightness(1.06)}
+  .btn-install{
+    display:none;background:transparent;color:var(--brass);
+    border:1px solid var(--brass-dim);padding:7px 12px;font-size:12px;align-items:center;
+  }
+  .btn-install:hover{background:rgba(201,162,75,.1)}
+  .btn-set{
+    flex:0 0 auto;background:var(--board-2);color:var(--brass);
+    border:1px solid var(--board-line);padding:11px 12px;font-size:14px;line-height:1;
+  }
+  .btn-set:hover{filter:brightness(1.25)}
+
+  /* ---------- Setup card ---------- */
+  .setup{
+    background:var(--board-2);border:1px solid var(--board-line);
+    border-radius:var(--radius);padding:22px 20px;margin-top:22px;
+  }
+  .setup h2{
+    font-family:'Bricolage Grotesque',sans-serif;font-size:18px;margin:0 0 6px;
+    color:var(--paper);font-weight:700;
+  }
+  .setup p{color:var(--board-muted);font-size:13px;line-height:1.5;margin:0 0 16px}
+  .setup p a{color:var(--brass);font-weight:600}
+  .field{display:flex;gap:8px;margin-bottom:12px}
+  input.key{
+    flex:1;min-width:0;background:#0c1814;border:1px solid var(--board-line);
+    border-radius:10px;color:var(--board-text);padding:12px 13px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;
+  }
+  input.key:focus{outline:2px solid var(--brass);outline-offset:1px}
+  .btn-connect{background:var(--win);color:#06231a;padding:12px 18px;font-size:14px}
+  .steps{list-style:none;padding:0;margin:14px 0 0;counter-reset:s}
+  .steps li{
+    counter-increment:s;position:relative;padding:6px 0 6px 30px;
+    font-size:12.5px;color:var(--board-muted);line-height:1.5;
+  }
+  .steps li::before{
+    content:counter(s);position:absolute;left:0;top:5px;
+    width:20px;height:20px;border-radius:50%;background:var(--board-line);
+    color:var(--brass);font-family:'JetBrains Mono',monospace;font-size:11px;
+    font-weight:700;display:grid;place-items:center;
+  }
+
+  /* ---------- How it works ---------- */
+  .how{margin-top:14px;border-top:1px solid var(--board-line);padding-top:6px}
+  .how summary{
+    cursor:pointer;list-style:none;font-size:12.5px;color:var(--brass);
+    font-weight:600;padding:8px 0;display:flex;align-items:center;gap:6px;
+  }
+  .how summary::-webkit-details-marker{display:none}
+  .how summary::before{content:"＋";font-family:'JetBrains Mono',monospace}
+  .how[open] summary::before{content:"－"}
+  .how-body{font-size:12.5px;color:var(--board-muted);line-height:1.6;padding:0 0 8px}
+  .how-body b{color:var(--board-text)}
+
+  /* ---------- States ---------- */
+  .state{
+    text-align:center;padding:48px 20px;color:var(--board-muted);font-size:14px;
+  }
+  .state.err{color:#f0b3a3}
+  .spinner{
+    width:26px;height:26px;border:3px solid var(--board-line);
+    border-top-color:var(--brass);border-radius:50%;
+    animation:spin .8s linear infinite;margin:0 auto 14px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- Game ticket ---------- */
+  .games-meta{
+    display:none;margin-top:18px;font-family:'JetBrains Mono',monospace;
+    font-size:10px;color:var(--board-muted);letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .games-meta.show{display:block}
+  .games{margin-top:12px;display:flex;flex-direction:column;gap:14px}
+  .ticket{
+    background:var(--paper);border-radius:var(--radius);color:var(--ink);
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .tk-head{
+    padding:12px 14px 10px;display:flex;justify-content:space-between;
+    align-items:flex-start;gap:10px;border-bottom:1px dashed var(--paper-line);
+  }
+  .tk-match{font-weight:600;font-size:14.5px;line-height:1.3}
+  .tk-meta{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);
+    text-align:right;line-height:1.4;white-space:nowrap;flex:0 0 auto;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .rows{display:flex;flex-direction:column}
+  .row{
+    display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;
+    border-top:1px solid rgba(0,0,0,.04);transition:background .12s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .row:first-child{border-top:none}
+  .row:hover{background:var(--paper-2)}
+  .row.picked{background:#e7f3ea}
+  .row-main{flex:1;min-width:0}
+  .row-sel{font-weight:600;font-size:14px;line-height:1.2;display:flex;align-items:center;gap:7px}
+  .row-sub{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);
+    margin-top:3px;font-variant-numeric:tabular-nums;
+  }
+  .edge{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+    padding:2px 7px;border-radius:6px;white-space:nowrap;
+    background:#ece6d6;color:var(--ink-soft);
+  }
+  .edge.pos{background:var(--win-bg);color:var(--win-ink)}
+  .price-col{text-align:right;flex:0 0 auto;min-width:60px}
+  .price{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;
+    line-height:1;font-variant-numeric:tabular-nums;
+  }
+  .book{
+    font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-soft);
+    margin-top:3px;text-transform:uppercase;letter-spacing:.04em;
+    max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .addmark{
+    flex:0 0 auto;width:26px;height:26px;border-radius:7px;border:1.5px solid var(--paper-line);
+    display:grid;place-items:center;font-family:'JetBrains Mono',monospace;
+    font-weight:700;color:var(--ink-soft);font-size:15px;
+  }
+  .row.picked .addmark{background:var(--win);border-color:var(--win);color:#06231a}
+
+  /* ---------- Slip (sticky bottom) ---------- */
+  .slip{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:var(--paper);color:var(--ink);
+    border-top-left-radius:18px;border-top-right-radius:18px;
+    box-shadow:0 -12px 34px rgba(0,0,0,.4);
+    transform:translateY(calc(100% - 64px));
+    transition:transform .26s cubic-bezier(.22,1,.36,1);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .slip.open{transform:translateY(0)}
+  .slip.empty{transform:translateY(calc(100% + 40px))}
+  .slip-inner{max-width:560px;margin:0 auto}
+  .slip-bar{
+    height:64px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;cursor:pointer;gap:12px;
+  }
+  .slip-left{display:flex;align-items:center;gap:11px;min-width:0}
+  .slip-count{
+    background:var(--ink);color:var(--paper);font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:13px;width:30px;height:30px;border-radius:50%;
+    display:grid;place-items:center;flex:0 0 auto;
+  }
+  .slip-label{font-weight:600;font-size:14px;line-height:1.15}
+  .slip-label small{display:block;color:var(--ink-soft);font-weight:400;font-size:11px}
+  .slip-odds{text-align:right;flex:0 0 auto}
+  .slip-odds .big{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .slip-odds .lbl{font-size:9.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+  .chev{color:var(--ink-soft);font-size:13px;transition:transform .26s ease}
+  .slip.open .chev{transform:rotate(180deg)}
+
+  .slip-body{
+    border-top:1px dashed var(--paper-line);padding:6px 18px 18px;
+    max-height:62vh;overflow-y:auto;
+    /* perforated top edge */
+    background-image:radial-gradient(circle at 9px 0, transparent 4px, var(--paper) 4.5px);
+    background-size:18px 9px;background-position:0 -4px;background-repeat:repeat-x;
+  }
+  .leg{
+    display:flex;align-items:center;gap:10px;padding:11px 0;
+    border-bottom:1px dashed var(--paper-line);
+  }
+  .leg-main{flex:1;min-width:0}
+  .leg-sel{font-weight:600;font-size:13.5px;line-height:1.2}
+  .leg-game{font-size:11px;color:var(--ink-soft);margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .leg-price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums}
+  .leg-x{
+    flex:0 0 auto;width:24px;height:24px;border-radius:6px;border:none;
+    background:#e6ddc9;color:var(--ink-soft);font-size:15px;cursor:pointer;
+    display:grid;place-items:center;line-height:1;
+  }
+  .leg-x:hover{background:var(--warn);color:#fff}
+
+  .summary{margin-top:14px;display:flex;flex-direction:column;gap:9px}
+  .stake-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--paper-2);border-radius:10px;padding:10px 14px;
+  }
+  .stake-row label{font-size:13px;font-weight:600}
+  .stake-input{display:flex;align-items:center;gap:6px}
+  .stake-input span{font-family:'JetBrains Mono',monospace;color:var(--ink-soft);font-weight:700}
+  input.stake{
+    width:84px;background:var(--paper);border:1px solid var(--paper-line);
+    border-radius:8px;padding:8px 10px;font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:15px;text-align:right;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  input.stake:focus{outline:2px solid var(--brass)}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;
+    background:var(--paper-line);border-radius:10px;overflow:hidden}
+  .stat{background:var(--paper);padding:10px 13px}
+  .stat .k{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+  .stat .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;margin-top:3px;
+    font-variant-numeric:tabular-nums}
+  .stat .v.pos{color:var(--win-ink)}
+  .stat .v.neg{color:var(--warn)}
+
+  .payout{
+    background:var(--ink);color:var(--paper);border-radius:12px;
+    padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .payout .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#c9c2b0}
+  .payout .v{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--brass)}
+
+  .disclaimer{
+    font-size:11px;color:var(--ink-soft);line-height:1.55;margin-top:13px;
+    padding-top:11px;border-top:1px dashed var(--paper-line);
+  }
+  .disclaimer b{color:var(--ink)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:var(--board-line);border-radius:4px}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="mast-inner">
+    <div class="brandrow">
+      <div class="brand">LA <b>PIZARRA</b></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-install" id="installBtn">Instalar</button>
+        <div class="quota" id="quota"></div>
+      </div>
+    </div>
+    <div class="tagline">Valor y párleys con datos reales de mercado</div>
+    <div class="sportbar" id="sportbar">
+      <div class="sel-wrap"><select id="sport"></select></div>
+      <button class="btn btn-load" id="loadBtn">Cargar</button>
+      <button class="btn btn-set" id="setBtn" title="Cambiar clave" aria-label="Cambiar clave">⚙</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="setup" id="setup">
+    <h2>Conecta tus datos</h2>
+    <p>Esta app lee cuotas reales de varias casas a través de <a href="https://the-odds-api.com/" target="_blank" rel="noopener">The Odds API</a> (plan gratuito). Necesitas tu propia clave gratis — toma un minuto.</p>
+    <div class="field">
+      <input class="key" id="keyInput" placeholder="Pega aquí tu API key" autocomplete="off" spellcheck="false">
+      <button class="btn btn-connect" id="connectBtn">Conectar</button>
+    </div>
+    <div id="iosHint" style="display:none;font-size:12.5px;color:var(--brass);background:rgba(201,162,75,.08);border:1px solid var(--board-line);border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.5">En iPhone: toca <b>Compartir</b> ▸ <b>Agregar a inicio</b> para instalar la app en tu pantalla.</div>
+    <ol class="steps">
+      <li>Abre <a href="https://the-odds-api.com/" target="_blank" rel="noopener" style="color:var(--brass)">the-odds-api.com</a> y crea una cuenta gratis.</li>
+      <li>Copia tu API key del panel.</li>
+      <li>Pégala arriba y pulsa Conectar.</li>
+    </ol>
+    <details class="how">
+      <summary>¿Cómo calcula el valor?</summary>
+      <div class="how-body">
+        Cada cuota decimal implica una probabilidad (1 ÷ cuota). Las casas inflan esas probabilidades para quedarse con su margen, así que la app <b>le quita el margen</b> a cada casa y promedia entre todas para estimar la probabilidad "justa" (el <b>consenso de mercado</b>). Luego busca el <b>mejor precio disponible</b> entre las casas y calcula tu valor esperado: <b>prob. justa × mejor cuota − 1</b>. Si sale positivo, ese precio te paga de más. En un párley, las probabilidades de cada pata se <b>multiplican</b>: por eso pagan mucho y aciertan poco. Nota: cada carga de cuotas usa <b>2 solicitudes</b> de tu plan gratis (consulta 2 regiones de casas para un consenso más sólido).
+      </div>
+    </details>
+    <div id="setupErr"></div>
+  </section>
+
+  <div class="games-meta" id="gamesMeta"></div>
+  <div class="games" id="games"></div>
+</div>
+
+<div class="slip empty" id="slip">
+  <div class="slip-inner">
+    <div class="slip-bar" id="slipBar">
+      <div class="slip-left">
+        <div class="slip-count" id="slipCount">0</div>
+        <div class="slip-label">Tu párley<small id="slipSub">Toca para ver el detalle</small></div>
+      </div>
+      <div class="slip-odds">
+        <div class="big" id="slipOdds">—</div>
+        <div class="lbl">cuota total</div>
+      </div>
+      <div class="chev">▲</div>
+    </div>
+    <div class="slip-body" id="slipBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const API = 'https://api.the-odds-api.com/v4';
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    apiKey:'', connected:false, sports:[], sportKey:'',
+    events:[], parlay:[], stake:10,
+    requestsLeft:null, requestsUsed:null,
+    loadedAt:null, hiddenLive:0,
+  };
+
+  /* ---------- helpers ---------- */
+  function fmtTime(iso){
+    try{
+      const d = new Date(iso);
+      return d.toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function pct(x){ return (x*100).toFixed(1)+'%'; }
+  function dec(x){ return Number(x).toFixed(2); }
+
+  function readQuota(res){
+    const left = res.headers.get('x-requests-remaining');
+    const used = res.headers.get('x-requests-used');
+    if(left!==null) state.requestsLeft = left;
+    if(used!==null) state.requestsUsed = used;
+    renderQuota();
+  }
+  function renderQuota(){
+    if(state.requestsLeft===null){ $('quota').innerHTML=''; return; }
+    $('quota').innerHTML = 'API restante<br><b>'+state.requestsLeft+'</b> solicitudes';
+  }
+
+  async function apiError(res){
+    let msg = 'Error '+res.status;
+    if(res.status===401) msg = 'La API key no es válida. Revísala e intenta de nuevo.';
+    else if(res.status===422) msg = 'Petición no válida para este deporte.';
+    else if(res.status===429) msg = 'Te quedaste sin solicitudes gratis este mes.';
+    else { try{ const j = await res.json(); if(j && j.message) msg = j.message; }catch(e){} }
+    return new Error(msg);
+  }
+
+  function netHint(e){
+    // Likely CORS / network when fetch throws TypeError
+    if(e && e.name==='TypeError'){
+      return 'No se pudo conectar. Si estás abriendo el archivo directamente, súbelo a un hosting gratis (GitHub Pages) y vuelve a probar.';
+    }
+    return e.message || 'Algo salió mal.';
+  }
+
+  /* ---------- data ---------- */
+  async function fetchSports(){
+    const res = await fetch(API+'/sports/?apiKey='+encodeURIComponent(state.apiKey));
+    readQuota(res);
+    if(!res.ok) throw await apiError(res);
+    const data = await res.json();
+    return data.filter(s => s.active && !s.has_outrights);
+  }
+
+  async function fetchOdds(key){
+    const url = API+'/sports/'+key+'/odds/?apiKey='+encodeURIComponent(state.apiKey)
+      +'&regions=us,eu&markets=h2h&oddsFormat=decimal';
+    const res = await fetch(url);
+    readQuota(res);
+    if(!res.ok) throw await apiError(res);
+    return await res.json();
+  }
+
+  // Analyze one event -> outcomes with best price + de-vigged consensus prob
+  function analyze(ev){
+    const books = ev.bookmakers || [];
+    const best = {};   // name -> {name,bestPrice,bestBook,prices:[]}
+    const fairs = {};  // name -> [fairProb per book]
+    books.forEach(b => {
+      const mk = (b.markets||[]).find(m=>m.key==='h2h');
+      if(!mk) return;
+      const outs = (mk.outcomes||[]).map(o=>({name:o.name,price:o.price,ip:1/o.price}));
+      const sumIp = outs.reduce((s,o)=>s+o.ip,0);
+      if(sumIp<=0) return;
+      outs.forEach(o=>{
+        if(!best[o.name]) best[o.name]={name:o.name,bestPrice:0,bestBook:'',prices:[]};
+        best[o.name].prices.push(o.price);
+        if(o.price>best[o.name].bestPrice){ best[o.name].bestPrice=o.price; best[o.name].bestBook=b.title; }
+        (fairs[o.name]=fairs[o.name]||[]).push(o.ip/sumIp);
+      });
+    });
+    return Object.values(best).map(o=>{
+      const f = fairs[o.name]||[];
+      const fairProb = f.length ? f.reduce((a,c)=>a+c,0)/f.length : 1/o.bestPrice;
+      const ev = fairProb*o.bestPrice - 1;
+      return {name:o.name, bestPrice:o.bestPrice, book:o.bestBook,
+              nBooks:o.prices.length, fairProb, ev};
+    });
+  }
+
+  /* ---------- parlay ---------- */
+  function legId(evId,name){ return evId+'§'+name; }
+  function inParlayEvent(evId){ return state.parlay.find(l=>l.evId===evId); }
+
+  function toggleLeg(ev, oc){
+    const id = legId(ev.id, oc.name);
+    const idx = state.parlay.findIndex(l=>l.id===id);
+    if(idx>=0){ state.parlay.splice(idx,1); }
+    else {
+      // one selection per game: replace any existing leg from same event
+      const exist = state.parlay.findIndex(l=>l.evId===ev.id);
+      const leg = {
+        id, evId:ev.id,
+        game: (ev.away_team? ev.away_team+' vs '+ev.home_team : ev.sport_title),
+        sel: oc.name, price: oc.bestPrice, book: oc.book, fairProb: oc.fairProb
+      };
+      if(exist>=0) state.parlay[exist]=leg; else state.parlay.push(leg);
+    }
+    renderGames(); renderSlip();
+  }
+
+  function parlayStats(){
+    const legs = state.parlay;
+    const odds = legs.reduce((p,l)=>p*l.price,1);
+    const fair = legs.reduce((p,l)=>p*l.fairProb,1);
+    const ev = fair*odds - 1;
+    const payout = state.stake*odds;
+    return {odds, fair, ev, payout, profit:payout-state.stake, n:legs.length};
+  }
+
+  /* ---------- render: games ---------- */
+  function disp(name){ return name==='Draw' ? 'Empate' : name; }
+
+  function renderMeta(){
+    const m = $('gamesMeta');
+    if(!state.connected || state._loading || state._error || !state.loadedAt){
+      m.classList.remove('show'); m.textContent=''; return;
+    }
+    let t = state.events.length + (state.events.length===1?' partido':' partidos')
+      + ' · actualizado ' + state.loadedAt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    if(state.hiddenLive>0) t += ' · '+state.hiddenLive+' en vivo (ocultos)';
+    m.textContent = t; m.classList.add('show');
+  }
+
+  function renderGames(){
+    const box = $('games');
+    if(!state.connected){ box.innerHTML=''; return; }
+    if(state._loading){
+      box.innerHTML = '<div class="state"><div class="spinner"></div>Cargando partidos…</div>'; return;
+    }
+    if(state._error){
+      box.innerHTML = '<div class="state err">'+state._error+'</div>'; return;
+    }
+    if(!state.events.length){
+      box.innerHTML = '<div class="state">No hay partidos próximos con cuotas para este deporte (los ya empezados se ocultan). Prueba otro.</div>'; return;
+    }
+    let html='';
+    state.events.forEach(ev=>{
+      const ocs = analyze(ev).sort((a,b)=>b.ev-a.ev);
+      if(!ocs.length) return;
+      const match = ev.away_team ? (ev.away_team+' <span style="color:var(--ink-soft)">vs</span> '+ev.home_team) : (ev.sport_title||'');
+      html += '<div class="ticket"><div class="tk-head"><div class="tk-match">'+match+'</div>'+
+              '<div class="tk-meta">'+(ev.sport_title||'')+'<br>'+fmtTime(ev.commence_time)+'</div></div><div class="rows">';
+      ocs.forEach(oc=>{
+        const id = legId(ev.id, oc.name);
+        const picked = state.parlay.some(l=>l.id===id);
+        const reliable = oc.nBooks>=3;
+        const pos = oc.ev>0.0001;
+        const sub = 'justa '+pct(oc.fairProb)+' · '+oc.nBooks+(oc.nBooks===1?' casa':' casas')+(reliable?'':' ⚠');
+        html += '<div class="row'+(picked?' picked':'')+'" role="button" tabindex="0" aria-pressed="'+picked+'" data-ev="'+ev.id+'" data-oc="'+encodeURIComponent(oc.name)+'">'+
+          '<div class="row-main"><div class="row-sel">'+disp(oc.name)+'</div>'+
+          '<div class="row-sub"'+(reliable?'':' title="Pocas casas: consenso menos confiable"')+'>'+sub+'</div></div>'+
+          '<div class="edge'+((pos&&reliable)?' pos':'')+'">'+(pos?'+':'')+(oc.ev*100).toFixed(1)+'%</div>'+
+          '<div class="price-col"><div class="price">'+dec(oc.bestPrice)+'</div>'+
+          '<div class="book">'+oc.book+'</div></div>'+
+          '<div class="addmark">'+(picked?'✓':'+')+'</div></div>';
+      });
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
+  }
+
+  /* ---------- render: slip ---------- */
+  function renderSlip(){
+    const slip = $('slip');
+    const n = state.parlay.length;
+    $('slipCount').textContent = n;
+    if(n===0){
+      slip.classList.add('empty'); slip.classList.remove('open');
+      $('slipBody').innerHTML=''; $('slipOdds').textContent='—';
+      return;
+    }
+    slip.classList.remove('empty');
+    const s = parlayStats();
+    $('slipOdds').textContent = dec(s.odds);
+    $('slipSub').textContent = n+(n===1?' selección':' selecciones')+' · prob. estimada '+pct(s.fair);
+
+    let legs='';
+    state.parlay.forEach(l=>{
+      legs += '<div class="leg"><div class="leg-main"><div class="leg-sel">'+disp(l.sel)+'</div>'+
+        '<div class="leg-game">'+l.game+' · '+l.book+'</div></div>'+
+        '<div class="leg-price">'+dec(l.price)+'</div>'+
+        '<button class="leg-x" data-rm="'+l.id+'" aria-label="Quitar">×</button></div>';
+    });
+
+    const evPos = s.ev>0.0001;
+    const breakeven = 1/s.odds;
+    const fairOdds = s.fair>0 ? 1/s.fair : 0;
+    $('slipBody').innerHTML =
+      legs +
+      '<div class="summary">'+
+        '<div class="stake-row"><label for="stake">Tu apuesta</label>'+
+          '<div class="stake-input"><span>$</span><input class="stake" id="stake" type="number" min="0" step="1" value="'+state.stake+'" inputmode="decimal"></div></div>'+
+        '<div class="stat-grid">'+
+          '<div class="stat"><div class="k">Prob. estimada</div><div class="v">'+pct(s.fair)+'</div></div>'+
+          '<div class="stat"><div class="k">Punto de equilibrio</div><div class="v">'+pct(breakeven)+'</div></div>'+
+          '<div class="stat"><div class="k">Valor esperado</div><div class="v '+(evPos?'pos':'neg')+'">'+(evPos?'+':'')+(s.ev*100).toFixed(1)+'%</div></div>'+
+          '<div class="stat"><div class="k">Cuota justa</div><div class="v">'+(fairOdds?dec(fairOdds):'—')+'</div></div>'+
+        '</div>'+
+        '<div class="payout"><div><div class="k">Pago potencial</div></div><div class="v">$'+s.payout.toFixed(2)+'</div></div>'+
+        '<div class="disclaimer">La <b>prob. estimada</b> viene del consenso de mercado y trata las patas como independientes; por eso la app permite <b>una sola selección por partido</b>. El <b>punto de equilibrio</b> es la probabilidad que necesitas para no perder a la larga con esta cuota: si la prob. estimada lo supera (cuota ofrecida mayor que la <b>cuota justa</b>), el precio te favorece. Aun así, el párley solo paga si aciertan <b>todas</b> las patas. Apuesta solo lo que puedas permitirte perder.</div>'+
+      '</div>';
+    // re-bind stake input
+    const si = $('stake');
+    si.addEventListener('input', e=>{
+      const v = parseFloat(e.target.value);
+      state.stake = isNaN(v)?0:v;
+      const ss = parlayStats();
+      const pay = slip.querySelector('.payout .v');
+      if(pay) pay.textContent = '$'+ss.payout.toFixed(2);
+    });
+  }
+
+  /* ---------- sport selector ---------- */
+  function fillSports(){
+    const sel = $('sport');
+    const groups = {};
+    state.sports.forEach(s=>{ (groups[s.group]=groups[s.group]||[]).push(s); });
+    let html='';
+    Object.keys(groups).sort().forEach(g=>{
+      html += '<optgroup label="'+g+'">';
+      groups[g].forEach(s=>{ html += '<option value="'+s.key+'">'+s.title+'</option>'; });
+      html += '</optgroup>';
+    });
+    sel.innerHTML = html;
+    // default to a popular one if present
+    const pref = ['basketball_nba','soccer_epl','americanfootball_nfl','soccer_spain_la_liga'];
+    for(const p of pref){ if(state.sports.some(s=>s.key===p)){ sel.value=p; break; } }
+    state.sportKey = sel.value;
+  }
+
+  async function loadOdds(){
+    const lb=$('loadBtn'); lb.disabled=true; lb.textContent='Cargando…';
+    state._loading=true; state._error=''; renderGames(); renderMeta();
+    try{
+      const data = await fetchOdds(state.sportKey);
+      const now = Date.now();
+      const upcoming = data.filter(ev => new Date(ev.commence_time).getTime() > now);
+      state.hiddenLive = data.length - upcoming.length;
+      upcoming.sort((a,b)=> new Date(a.commence_time) - new Date(b.commence_time));
+      state.events = upcoming;
+      state.loadedAt = new Date();
+      state._loading=false; renderGames(); renderMeta();
+    }catch(e){
+      state._loading=false; state._error=netHint(e); renderGames(); renderMeta();
+    }
+    lb.disabled=false; lb.textContent='Cargar';
+  }
+
+  /* ---------- connect flow ---------- */
+  async function connect(){
+    const k = $('keyInput').value.trim();
+    if(!k){ $('keyInput').focus(); return; }
+    state.apiKey = k;
+    const btn = $('connectBtn'); btn.textContent='Conectando…'; btn.disabled=true;
+    $('setupErr').innerHTML='';
+    try{
+      state.sports = await fetchSports();
+      if(!state.sports.length) throw new Error('Tu clave funciona, pero ahora mismo no hay deportes activos en la API. Intenta más tarde.');
+      state.connected = true;
+      store('lp_key', k);
+      $('setup').style.display='none';
+      $('sportbar').classList.add('show');
+      fillSports();
+      await loadOdds();
+    }catch(e){
+      btn.textContent='Conectar'; btn.disabled=false;
+      $('setupErr').innerHTML =
+        '<div class="state err" style="padding:14px 0 0">'+netHint(e)+'</div>';
+    }
+  }
+
+  /* ---------- events ---------- */
+  $('connectBtn').addEventListener('click', connect);
+  $('keyInput').addEventListener('keydown', e=>{ if(e.key==='Enter') connect(); });
+
+  $('sport').addEventListener('change', e=>{ state.sportKey = e.target.value; });
+  $('loadBtn').addEventListener('click', loadOdds);
+
+  // delegate row taps
+  $('games').addEventListener('click', e=>{
+    const row = e.target.closest('.row'); if(!row) return;
+    const ev = state.events.find(x=>x.id===row.dataset.ev); if(!ev) return;
+    const ocName = decodeURIComponent(row.dataset.oc);
+    const oc = analyze(ev).find(o=>o.name===ocName); if(!oc) return;
+    toggleLeg(ev, oc);
+  });
+  $('games').addEventListener('keydown', e=>{
+    if(e.key!=='Enter' && e.key!==' ') return;
+    const row = e.target.closest('.row'); if(!row) return;
+    e.preventDefault(); row.click();
+  });
+
+  // slip open/close + remove legs
+  $('slipBar').addEventListener('click', ()=> $('slip').classList.toggle('open'));
+  $('slipBody').addEventListener('click', e=>{
+    const rm = e.target.closest('[data-rm]'); if(!rm) return;
+    const idx = state.parlay.findIndex(l=>l.id===rm.dataset.rm);
+    if(idx>=0){ state.parlay.splice(idx,1); renderGames(); renderSlip(); }
+  });
+
+  /* ---------- persistence (key saved on this device) ---------- */
+  function store(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function recall(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function forget(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+  $('setBtn').addEventListener('click', ()=>{ forget('lp_key'); location.reload(); });
+
+  /* ---------- install to home screen ---------- */
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault(); deferredPrompt=e;
+    const b=$('installBtn'); if(b) b.style.display='inline-flex';
+  });
+  const ib=$('installBtn');
+  if(ib) ib.addEventListener('click', async ()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt(); await deferredPrompt.userChoice;
+    deferredPrompt=null; ib.style.display='none';
+  });
+  window.addEventListener('appinstalled', ()=>{ if(ib) ib.style.display='none'; });
+  (function(){
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const standalone = window.navigator.standalone===true || matchMedia('(display-mode: standalone)').matches;
+    if(isIOS && !standalone){ const h=$('iosHint'); if(h) h.style.display='block'; }
+  })();
+
+  /* ---------- service worker (offline shell) ---------- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+  }
+
+  /* ---------- auto-connect with saved key ---------- */
+  (function init(){
+    const k=recall('lp_key');
+    if(k){ $('keyInput').value=k; connect(); }
+  })();
+
+  renderSlip();
+})();
+</script>
+</body>
+</html>

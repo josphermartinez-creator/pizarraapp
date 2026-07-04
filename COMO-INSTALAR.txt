@@ -1,0 +1,85 @@
+==========================================================
+  LA PIZARRA v2 — Cómo tenerla como app en tu teléfono
+==========================================================
+
+Hay dos maneras. Las dos empiezan igual: subir la app a un
+enlace HTTPS gratis (10 minutos, una sola vez).
+
+----------------------------------------------------------
+PASO 0 — Tu clave gratuita de datos
+----------------------------------------------------------
+1. Entra a https://the-odds-api.com/ y crea una cuenta gratis.
+2. Copia tu API key. La pegas dentro de la app UNA sola vez;
+   queda guardada en tu teléfono (engranaje ⚙ para cambiarla).
+
+----------------------------------------------------------
+PASO 1 — Subir la app a un enlace (elige UNA opción)
+----------------------------------------------------------
+OPCIÓN A — Netlify Drop (la más fácil, desde computadora):
+  1. Descomprime el .zip (te queda la carpeta "pizarra-app").
+  2. Abre https://app.netlify.com/drop
+  3. Arrastra la CARPETA a la página.
+  4. Te da un enlace https://... — ese es tu app.
+
+OPCIÓN B — GitHub Pages (permanente; funciona hasta desde el
+teléfono, aunque es más cómodo en computadora):
+  1. Crea cuenta gratis en https://github.com
+  2. Crea un repositorio nuevo, por ejemplo "pizarra".
+  3. "Add file ▸ Upload files": sube TODO el contenido de la
+     carpeta (index.html, manifest.webmanifest, sw.js, los .png).
+  4. Settings ▸ Pages ▸ Branch: main ▸ Save.
+  5. En unos minutos: https://TU-USUARIO.github.io/pizarra/
+
+----------------------------------------------------------
+RUTA 1 — Instalarla como app (PWA) — RECOMENDADA
+----------------------------------------------------------
+Abre tu enlace en el teléfono:
+  ANDROID (Chrome): botón "Instalar" dentro de la app, o
+    Menú ⋮ ▸ "Instalar aplicación".
+  iPHONE (Safari): Compartir ▸ "Agregar a inicio".
+Queda con su ícono, pantalla completa y tu clave guardada.
+
+----------------------------------------------------------
+RUTA 2 — APK de verdad (opcional, solo Android)
+----------------------------------------------------------
+Si quieres un archivo .apk instalable (por ejemplo para
+compartirlo), NO necesitas Android Studio:
+  1. Con la app ya subida (Paso 1), entra a
+     https://www.pwabuilder.com
+  2. Pega tu enlace y pulsa Start.
+  3. "Package for stores" ▸ Android ▸ descarga el paquete.
+     Incluye el .apk firmado y un archivo assetlinks.json.
+  4. Sube assetlinks.json a tu sitio dentro de una carpeta
+     llamada ".well-known" (en GitHub: crea la carpeta y sube
+     el archivo ahí). Sin este paso la app funciona igual,
+     pero muestra una barrita del navegador arriba.
+  5. Pasa el .apk a tu teléfono, permite "instalar apps
+     desconocidas" y ábrelo. Listo.
+Nota: publicar en Google Play requiere cuenta de developer
+(25 USD, pago único). Para uso personal no hace falta.
+
+----------------------------------------------------------
+NOVEDADES DE LA v2
+----------------------------------------------------------
+- Se ocultan los partidos ya empezados (sus cuotas quedan
+  viejas rápido y engañan).
+- Línea de estado: cuántos partidos hay y a qué hora se
+  actualizaron las cuotas.
+- El valor (+%) solo se marca en verde si el consenso viene
+  de 3+ casas; con menos, aparece ⚠ (menos confiable).
+- "Draw" ahora se muestra como "Empate".
+- El boleto ahora muestra el PUNTO DE EQUILIBRIO (la prob.
+  que necesitas para no perder a la larga) y la CUOTA JUSTA
+  del párley, junto a la prob. estimada y el valor esperado.
+- Errores de conexión ya no se acumulan repetidos.
+- Botón Cargar muestra estado mientras baja datos.
+
+----------------------------------------------------------
+NOTAS
+----------------------------------------------------------
+- El plan gratis da ~500 solicitudes/mes y cada carga usa 2
+  (consulta 2 regiones de casas para un consenso más sólido).
+  La app te muestra arriba cuántas te quedan.
+- Un valor esperado positivo (+EV) mejora tus resultados a la
+  larga, pero un parley nunca está garantizado: cada pata
+  debe acertar. Apuesta solo lo que puedas permitirte perder.
